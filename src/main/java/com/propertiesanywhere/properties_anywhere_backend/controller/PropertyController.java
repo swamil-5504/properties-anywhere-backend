@@ -35,7 +35,10 @@ public class PropertyController {
             @RequestParam Long userId,
             @RequestBody Property property) {
 
-        return propertyService.createProperty(property, userId);
+        return propertyService.createProperty(
+                property,
+                userId
+        );
     }
 
     @GetMapping("/user/{userId}")
@@ -44,4 +47,18 @@ public class PropertyController {
 
         return propertyService.getPropertiesByUser(userId);
     }
+
+    @PutMapping("/{id}")
+    public Property updateProperty(
+            @PathVariable Long id,
+            @RequestParam Long userId,
+            @RequestBody Property property) {
+
+        return propertyService.updateProperty(
+                id,
+                userId,
+                property
+        );
+    }
 }
+

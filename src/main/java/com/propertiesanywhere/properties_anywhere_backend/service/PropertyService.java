@@ -17,6 +17,7 @@ public class PropertyService {
     public PropertyService(
             PropertyRepository propertyRepository,
             UserRepository userRepository) {
+
         this.propertyRepository = propertyRepository;
         this.userRepository = userRepository;
     }
@@ -25,9 +26,17 @@ public class PropertyService {
         return propertyRepository.findByCityIgnoreCase(city);
     }
 
+    public Property getPropertyById(Long id) {
+        return propertyRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Property not found"));
+    }
+
     public Property createProperty(Property property, Long userId) {
+
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
 
         property.setUser(user);
 
@@ -38,8 +47,31 @@ public class PropertyService {
         return propertyRepository.findByUserId(userId);
     }
 
-    public Property getPropertyById(Long id) {
-        return propertyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Property not found"));
+    public Property updateProperty(
+            Long propertyId,
+            Long userId,
+            Property updatedProperty) {
+
+        Property existingProperty = propertyRepository.findById(propertyId)
+                .orElseThrow(() ->
+                        new RuntimeException("Property not found"));
+
+        if (existingProperty.getUser() == null ||
+                !existingProperty.getUser().getId().equals(userId)) {
+
+            throw new RuntimeException(
+                    "You are not allowed to update this property");
+        }
+
+        existingProperty.setTitle(updatedProperty.getTitle());
+        existingProperty.setCity(updatedProperty.getCity());
+        existingProperty.setAddress(updatedProperty.getAddress());
+        existingProperty.setRent(updatedProperty.getRent());
+        existingProperty.setImageUrl(updatedProperty.getImageUrl());
+        existingProperty.setDescription(
+                updatedProperty.getDescription()
+        );
+
+        return propertyRepository.save(existingProperty);
     }
 }
