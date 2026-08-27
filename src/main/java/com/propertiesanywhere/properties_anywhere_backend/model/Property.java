@@ -16,44 +16,67 @@ public class Property {
 
     private String address;
 
-    private double rent;
+    private Double rent;
 
+    @Column(columnDefinition = "TEXT")
     private String imageUrl;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    public Property() {
-    }
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
-    public Property(String title, String city, String address, double rent) {
-        this.title = title;
-        this.city = city;
-        this.address = address;
-        this.rent = rent;
+    public Property() {
     }
 
     public Long getId() {
         return id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getTitle() {
         return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public String getCity() {
         return city;
     }
 
+    public void setCity(String city) {
+        this.city = city;
+    }
+
     public String getAddress() {
         return address;
     }
 
-    public double getRent() {
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public Double getRent() {
         return rent;
+    }
+
+    public void setRent(Double rent) {
+        this.rent = rent;
     }
 
     public String getImageUrl() {
         return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public String getDescription() {
@@ -64,27 +87,11 @@ public class Property {
         this.description = description;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public User getUser() {
+        return user;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public void setRent(double rent) {
-        this.rent = rent;
+    public void setUser(User user) {
+        this.user = user;
     }
 }

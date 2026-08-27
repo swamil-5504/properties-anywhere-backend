@@ -17,13 +17,31 @@ public class PropertyController {
     }
 
     @GetMapping
-    public List<Property> getProperties(@RequestParam(required = false) String city){
-        return propertyService.getPropertiesByCity(city);
+    public List<Property> searchProperties(
+            @RequestParam String city) {
+
+        return propertyService.searchByCity(city);
+    }
+
+    @GetMapping("/{id}")
+    public Property getProperty(
+            @PathVariable Long id) {
+
+        return propertyService.getPropertyById(id);
     }
 
     @PostMapping
-    public Property createProperty(@RequestBody Property property) {
-        return propertyService.createProperty(property);
+    public Property createProperty(
+            @RequestParam Long userId,
+            @RequestBody Property property) {
+
+        return propertyService.createProperty(property, userId);
     }
 
+    @GetMapping("/user/{userId}")
+    public List<Property> getPropertiesByUser(
+            @PathVariable Long userId) {
+
+        return propertyService.getPropertiesByUser(userId);
+    }
 }
