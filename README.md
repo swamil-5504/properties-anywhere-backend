@@ -1,25 +1,52 @@
 # PropertiesAnywhere – Spring Boot Backend
 
+**Work in Progress 🚧**
+
 PropertiesAnywhere is a Spring Boot REST API that provides the backend for the PropertiesAnywhere Flutter application.
 
-The backend manages users and rental property listings and provides REST APIs for authentication, property discovery, property creation, property ownership and property updates.
+The backend manages users, rental property listings, and user-to-user messaging. It uses PostgreSQL for data persistence and exposes REST APIs consumed by the Flutter mobile application.
+
+The project is currently under active development and is intended for local development, testing, and experimentation.
+
+---
 
 ## Current Features
+
+### User Management
 
 * User registration
 * User login
 * User persistence
+* User identification through user IDs
+
+### Property Management
+
 * Property creation
 * Property search by city
 * Retrieve individual properties
 * Retrieve properties belonging to a user
 * Associate properties with their owner
 * Update existing properties
-* PostgreSQL database integration
-* JPA/Hibernate persistence
-* REST API architecture
+* PostgreSQL persistence for properties
 
-## Technology Stack
+### Messaging
+
+* User-to-user messaging
+* Messages associated with a property
+* Send messages between users
+* Retrieve messages for a property
+* Retrieve a user's messages
+* Retrieve conversations between two users
+* Unread message tracking
+* Unread message count
+* Mark conversations as read
+* Conversation-specific message history
+
+The messaging system is currently functional and integrated with the Flutter frontend.
+
+---
+
+# Technology Stack
 
 * Java
 * Spring Boot
@@ -27,40 +54,80 @@ The backend manages users and rental property listings and provides REST APIs fo
 * Spring Data JPA
 * Hibernate
 * PostgreSQL
-* Maven
+* Gradle
 * REST APIs
 
-## Architecture
+---
+
+# Architecture
 
 The backend follows a layered architecture:
 
 ```text
-Controller
-    ↓
-Service
-    ↓
-Repository
-    ↓
-PostgreSQL
+Flutter Application
+        ↓
+     REST API
+        ↓
+    Controller
+        ↓
+      Service
+        ↓
+    Repository
+        ↓
+    PostgreSQL
 ```
 
 ### Controller
 
-Handles HTTP requests and exposes REST endpoints.
+Controllers handle HTTP requests and expose REST endpoints to the Flutter application.
+
+Examples:
+
+```text
+UserController
+PropertyController
+MessageController
+```
 
 ### Service
 
-Contains application and business logic.
+Services contain the application's business and application logic.
+
+Examples:
+
+```text
+UserService
+PropertyService
+MessageService
+```
 
 ### Repository
 
-Provides database access using Spring Data JPA.
+Repositories provide database access through Spring Data JPA.
+
+Examples:
+
+```text
+UserRepository
+PropertyRepository
+MessageRepository
+```
 
 ### Model
 
-Contains the application's database entities.
+The model layer contains the JPA entities used by the application.
 
-## Project Structure
+Examples:
+
+```text
+User
+Property
+Message
+```
+
+---
+
+# Project Structure
 
 ```text
 src/
@@ -69,38 +136,49 @@ src/
         └── com/
             └── propertiesanywhere/
                 └── properties_anywhere_backend/
+                    │
                     ├── controller/
                     │   ├── UserController.java
-                    │   └── PropertyController.java
+                    │   ├── PropertyController.java
+                    │   └── MessageController.java
                     │
                     ├── model/
                     │   ├── User.java
-                    │   └── Property.java
+                    │   ├── Property.java
+                    │   └── Message.java
                     │
                     ├── repository/
                     │   ├── UserRepository.java
-                    │   └── PropertyRepository.java
+                    │   ├── PropertyRepository.java
+                    │   └── MessageRepository.java
                     │
                     └── service/
                         ├── UserService.java
-                        └── PropertyService.java
+                        ├── PropertyService.java
+                        └── MessageService.java
 ```
 
-Additional messaging-related classes will be added as the messaging feature is implemented.
+---
 
-## Database
+# Database
 
-The backend currently uses PostgreSQL.
+PropertiesAnywhere currently uses **PostgreSQL** as its database.
 
 The main entities are:
 
 ```text
 User
-  │
-  │ 1
-  │
-  │ *
-Property
+ │
+ ├───────────────┐
+ │               │
+ │ 1             │ 1
+ │               │
+ │ *             │ *
+Property       Message
+                 │
+                 ├── sender → User
+                 ├── receiver → User
+                 └── property → Property
 ```
 
 A property belongs to a user through:
@@ -109,15 +187,27 @@ A property belongs to a user through:
 Property.user
 ```
 
-The database relationship uses:
+Messages contain relationships to:
 
 ```text
-properties.user_id
+Message.sender
+Message.receiver
+Message.property
 ```
 
-## Property API
+The message table also contains:
 
-### Search Properties
+```text
+is_read
+```
+
+which is used to track whether the receiving user has read a message.
+
+---
+
+# Property API
+
+## Search Properties
 
 ```http
 GET /api/properties?city={city}
@@ -131,15 +221,19 @@ GET /api/properties?city=Siegen
 
 Returns properties matching the requested city.
 
-### Get Property
+---
+
+## Get Property
 
 ```http
 GET /api/properties/{id}
 ```
 
-Returns a specific property including its associated user information.
+Returns a specific property.
 
-### Create Property
+---
+
+## Create Property
 
 ```http
 POST /api/properties?userId={userId}
@@ -153,15 +247,19 @@ Example:
 POST /api/properties?userId=1
 ```
 
-### Get User's Properties
+---
+
+## Get User's Properties
 
 ```http
 GET /api/properties/user/{userId}
 ```
 
-Returns all properties created by the specified user.
+Returns properties created by the specified user.
 
-### Update Property
+---
+
+## Update Property
 
 ```http
 PUT /api/properties/{id}
@@ -169,9 +267,7 @@ PUT /api/properties/{id}
 
 Updates an existing property.
 
-The request body contains the updated property information.
-
-Example:
+Example request body:
 
 ```json
 {
@@ -184,41 +280,285 @@ Example:
 }
 ```
 
-## Example Property
+---
+
+# Messaging API
+
+The messaging system allows users to communicate with each other regarding a specific property.
+
+Each message contains:
+
+```text
+Sender
+Receiver
+Property
+Content
+Sent timestamp
+Read status
+```
+
+---
+
+## Send Message
+
+```http
+POST /api/messages
+```
+
+Parameters:
+
+```text
+senderId
+receiverId
+propertyId
+```
+
+Request body:
+
+```json
+{
+  "content": "Is this room still available?"
+}
+```
+
+Example:
+
+```text
+POST /api/messages?senderId=1&receiverId=2&propertyId=5
+```
+
+A new message is created with:
+
+```text
+isRead = false
+```
+
+---
+
+## Get Messages for a Property
+
+```http
+GET /api/messages/property/{propertyId}
+```
+
+Returns all messages associated with a property.
+
+Messages are ordered from oldest to newest.
+
+---
+
+## Get Conversation
+
+```http
+GET /api/messages/conversation
+```
+
+Parameters:
+
+```text
+user1Id
+user2Id
+propertyId
+```
+
+Example:
+
+```text
+GET /api/messages/conversation?user1Id=1&user2Id=2&propertyId=5
+```
+
+This retrieves messages exchanged between two users regarding a specific property.
+
+The conversation is limited to:
+
+```text
+User 1 ↔ User 2
+        +
+   Property
+```
+
+This prevents messages from unrelated properties or users from appearing in the conversation.
+
+---
+
+## Get User Messages
+
+```http
+GET /api/messages/user/{userId}
+```
+
+Returns messages where the specified user is either:
+
+```text
+sender
+```
+
+or
+
+```text
+receiver
+```
+
+The Flutter application uses this endpoint to construct the Messages screen.
+
+---
+
+## Get Unread Messages
+
+```http
+GET /api/messages/unread/{userId}
+```
+
+Returns messages that have not yet been read by the specified user.
+
+---
+
+## Get Unread Message Count
+
+```http
+GET /api/messages/unread/count/{userId}
+```
+
+Returns the number of unread messages for a user.
+
+The Flutter application uses this information to display the notification count on the Messages button.
+
+---
+
+## Mark Conversation as Read
+
+```http
+PUT /api/messages/read
+```
+
+Parameters:
+
+```text
+receiverId
+senderId
+propertyId
+```
+
+Example:
+
+```text
+PUT /api/messages/read?receiverId=1&senderId=2&propertyId=5
+```
+
+The backend updates matching unread messages:
+
+```text
+is_read = false
+```
+
+to:
+
+```text
+is_read = true
+```
+
+This happens when the user opens the specific conversation.
+
+The read operation is therefore **conversation-specific** rather than marking every message in the application as read.
+
+---
+
+# Message Read/Unread Logic
+
+The messaging system uses the following logic:
+
+```text
+User A sends message to User B
+             ↓
+        is_read = false
+             ↓
+User B sees notification
+             ↓
+User B opens Messages
+             ↓
+Unread conversation remains visible
+             ↓
+User B opens the specific chat
+             ↓
+PUT /api/messages/read
+             ↓
+Matching messages become:
+        is_read = true
+             ↓
+Notification disappears
+```
+
+This allows unread messages to remain highlighted until the user actually opens the relevant conversation.
+
+---
+
+# Example Message
+
+A message returned by the API can contain information similar to:
 
 ```json
 {
   "id": 1,
-  "title": "Modern WG Room",
-  "city": "Siegen",
-  "address": "Example Street 10",
-  "rent": 450,
-  "imageUrl": "https://example.com/image.jpg",
-  "description": "A furnished room near the university.",
-  "user": {
+  "sender": {
     "id": 1,
-    "name": "Swamil",
-    "email": "example@email.com"
-  }
+    "name": "Swamil"
+  },
+  "receiver": {
+    "id": 2,
+    "name": "John"
+  },
+  "property": {
+    "id": 5,
+    "title": "Modern WG Room"
+  },
+  "content": "Is this room still available?",
+  "sentAt": "2026-08-27T14:30:00",
+  "isRead": false
 }
 ```
 
-The `user` relationship allows the Flutter application to determine the owner of a property.
+---
 
-## Running the Backend
+# PostgreSQL
+
+The backend uses PostgreSQL for persistent storage.
+
+The `messages` table contains the read-status field:
+
+```sql
+ALTER TABLE messages
+ADD COLUMN IF NOT EXISTS is_read
+BOOLEAN NOT NULL DEFAULT FALSE;
+```
+
+This ensures newly created messages are unread by default.
+
+The database configuration is stored in the Spring Boot application configuration.
+
+---
+
+# Running the Backend
 
 Make sure PostgreSQL is running and the database configuration is correctly configured.
 
-From the backend project directory:
+From the backend project directory, run:
 
-```bash
-./mvnw spring-boot:run
-```
-
-On Windows PowerShell:
+### Windows PowerShell
 
 ```powershell
-.\mvnw.cmd spring-boot:run
+.\gradlew.bat bootRun
+```
+
+### Windows Command Prompt
+
+```cmd
+gradlew.bat bootRun
+```
+
+### Linux/macOS
+
+```bash
+./gradlew bootRun
 ```
 
 The backend runs on:
@@ -227,24 +567,44 @@ The backend runs on:
 http://localhost:8080
 ```
 
-## Flutter Android Emulator
+---
 
-The Android Emulator cannot use the development computer's `localhost` directly.
+# Flutter Android Emulator
 
-The Flutter application therefore uses:
+When running the Flutter application using the Android Emulator, the emulator cannot access the development computer using:
+
+```text
+localhost
+```
+
+Instead, the Flutter application communicates with the Spring Boot backend through:
 
 ```text
 http://10.0.2.2:8080
 ```
 
-to communicate with this backend.
+Therefore, the current Flutter development configuration uses:
 
-## Current Development Status
+```text
+10.0.2.2:8080
+```
 
-### Completed
+for API requests.
+
+This configuration is intended for local development.
+
+For production deployment, the Flutter application will need to use the URL of the deployed backend instead.
+
+---
+
+# Current Development Status
+
+## Completed
 
 * Spring Boot project setup
+* Gradle build configuration
 * PostgreSQL integration
+* JPA/Hibernate integration
 * User model
 * User registration
 * User login
@@ -255,23 +615,100 @@ to communicate with this backend.
 * Property retrieval API
 * User property API
 * Property update API
+* Message model
+* Message repository
+* Message service
+* Message controller
+* Send message API
+* Conversation API
+* User message API
+* Unread message API
+* Unread message count
+* Mark conversation as read
+* Property-specific conversations
+* Read/unread message tracking
+* Flutter chat integration
 
-### Currently Planned
+---
 
-* User-to-user messaging
-* Conversation entity
-* Message entity
-* Conversation APIs
-* Message APIs
-* Chat functionality
-* Conversation history
-* Unread messages
-* Owner/user authorization for property updates
-* Production authentication using JWT
+# Work in Progress 🚧
+
+PropertiesAnywhere is still an active development project.
+
+The following areas are planned or being improved:
+
 * Production deployment
+* Production database configuration
+* Secure authentication
+* JWT-based authentication
+* Password security improvements
+* Authorization and access control
+* Property ownership validation
+* Better API validation
+* Error handling
+* API documentation
+* Image storage and management
+* User profiles
+* Improved messaging experience
+* Real-time messaging
+* Push notifications
+* Message timestamps and delivery status
+* Pagination for messages and properties
+* Search and filtering improvements
+* Production security configuration
+* CORS configuration for production
+* Testing
+* Automated tests
+* Performance improvements
 
-## Development
+---
 
-The backend is currently configured for local development and testing with the Flutter Android application.
+# Development Status
 
-The messaging system will be added as the next major feature.
+```text
+🚧 WORK IN PROGRESS
+
+Backend:
+    ✅ User management
+    ✅ Property management
+    ✅ PostgreSQL
+    ✅ Messaging
+    ✅ Read/unread messages
+    🚧 Authentication security
+    🚧 Real-time messaging
+    🚧 Production deployment
+    🚧 Testing
+    🚧 Additional features
+```
+
+This project is currently intended primarily for **development and local testing**.
+
+The architecture and APIs may change as new features are implemented.
+
+---
+
+# Future Goal
+
+The goal of PropertiesAnywhere is to provide a simple platform where users can:
+
+```text
+Create an account
+       ↓
+Browse properties
+       ↓
+View property details
+       ↓
+Contact the property owner
+       ↓
+Chat about the property
+       ↓
+Arrange a viewing / rental
+```
+
+The long-term goal is to evolve the project into a more complete property and shared-housing platform.
+
+---
+
+# License
+
+This project is currently a personal work-in-progress project and is primarily intended for development, learning, and testing.
