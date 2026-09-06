@@ -3,6 +3,7 @@ package com.propertiesanywhere.properties_anywhere_backend.controller;
 import com.propertiesanywhere.properties_anywhere_backend.model.Property;
 import com.propertiesanywhere.properties_anywhere_backend.service.PropertyService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -30,13 +31,23 @@ public class PropertyController {
         return propertyService.getPropertyById(id);
     }
 
-    @PostMapping
+    @PostMapping(consumes = "multipart/form-data")
     public Property createProperty(
             @RequestParam Long userId,
-            @RequestBody Property property) {
+            @RequestParam String title,
+            @RequestParam String city,
+            @RequestParam String address,
+            @RequestParam Double rent,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) MultipartFile image) {
 
         return propertyService.createProperty(
-                property,
+                title,
+                city,
+                address,
+                rent,
+                description,
+                image,
                 userId
         );
     }
@@ -48,17 +59,29 @@ public class PropertyController {
         return propertyService.getPropertiesByUser(userId);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(
+            value = "/{id}",
+            consumes = "multipart/form-data"
+    )
     public Property updateProperty(
             @PathVariable Long id,
             @RequestParam Long userId,
-            @RequestBody Property property) {
+            @RequestParam String title,
+            @RequestParam String city,
+            @RequestParam String address,
+            @RequestParam Double rent,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) MultipartFile image) {
 
         return propertyService.updateProperty(
                 id,
                 userId,
-                property
+                title,
+                city,
+                address,
+                rent,
+                description,
+                image
         );
     }
 }
-
